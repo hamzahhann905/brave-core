@@ -1,0 +1,8 @@
+# visibility includes which can help minimize patches for //brave/test/BUILD.gn.
+brave_media_base_visibility = [
+   "//brave/test:brave_browser_tests"
+]
+
+brave_third_party_widevine_cdm_visibility = [
+  "//brave/test:brave_unit_tests"
+]
