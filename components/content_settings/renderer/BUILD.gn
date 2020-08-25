@@ -6,7 +6,8 @@ source_set("renderer") {
     "//components/content_settings/renderer/*",
     "//brave/renderer/*",
     "//brave:child_dependencies",
-    "//brave/test:*"
+    "//brave/test:*",
+    "//brave/chromium_src/components/content_settings/renderer:renderer"
   ]
 
   sources = [
