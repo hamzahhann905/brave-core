@@ -420,20 +420,8 @@ This file contains all "about" strings.  It is set to NOT be translated, in tran
       <message name="IDS_DDG_OFFER_LINK" desc="Text for DDG offer link.">
         Learn about private search with DuckDuckGo
       </message>
-      <message name="IDS_BRAVE_UI_THANK_YOU" desc="A message that appears after tipping">
-        Thank you
-      </message>
-      <message name="IDS_BRAVE_UI_TIP_TEXT" desc="string from Thank you screen">
-        You've just sent a tip to:
-      </message>
-      <message name="IDS_BRAVE_UI_AUTO_TIP_TEXT" desc="string from Thank you screen">
-        You are automatically sending a tip to:
-      </message>
       <message name="IDS_BRAVE_UI_MONTHLY_TEXT" desc="string from Thank you screen">
         Monthly
-      </message>
-      <message name="IDS_BRAVE_UI_FIRST_TIP_TEXT" desc="string from Thank you screen">
-        Your first monthly tip will be sent on:
       </message>
       <message name="IDS_BRAVE_UI_SITE_BANNER_NOTICE_TEXT" desc="A message on tipping page when a creator is not verified yet">
         NOTE: This creator has not yet signed up to receive contributions from Brave users. We'll keep trying to contribute until they verify, or until 90 days have passed.
@@ -916,7 +904,7 @@ until they verify, or until 90 days have passed.
         Turn on Brave Ads
       </message>
       <message name="IDS_NTP_TOS_TEXT" desc="Text for term of service on NTP">
-        By turning on Rewards, you agree to the <ph name="TERMS_OF_SERVICE">%1$s</ph>. 
+        By turning on Rewards, you agree to the <ph name="TERMS_OF_SERVICE">%1$s</ph>.
       </message>
       <message name="IDS_GET_PAID_TO_SEE_IMAGE" desc="Text description for NTP banner.">
         Get paid to see this background image.
