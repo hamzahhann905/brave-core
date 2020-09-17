@@ -27,18 +27,6 @@
             "description": "playlist item id of added or deleted playlist"
           }
         ]
-      },
-      {
-        "name": "onDownloadRequested",
-        "type": "function",
-        "description": "Fired when someone requests the playlist backend to download a URL and use information within the URL to create a playlist",
-        "parameters": [
-          {
-            "name": "url",
-            "type": "string",
-            "description": "URL to download"
-          }
-        ]
       }
     ],
     "types": [
@@ -81,75 +69,6 @@
       }
     ],
     "functions": [
-      {
-        "name": "createPlaylistItem",
-        "type": "function",
-        "description": "create new playlist",
-        "parameters": [
-          {
-            "type": "object",
-            "name": "createParams",
-            "properties": {
-              "videoMediaFiles": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Data for each video media file in this playlist",
-                  "properties": {
-                    "url": {
-                      "type": "string",
-                      "description": "Url for this media file"
-                    },
-                    "title": {
-                      "type": "string",
-                      "description": "Title for this media file"
-                    },
-                    "thumb": {
-                      "type": "string",
-                      "description": "Thumbnail for this media file"
-                    }
-                  }
-                }
-               },
-              "audioMediaFiles": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Data for each audio media file in this playlist",
-                  "properties": {
-                    "url": {
-                      "type": "string",
-                      "description": "Url for this media file"
-                    },
-                    "title": {
-                      "type": "string",
-                      "description": "Title for this media file"
-                    },
-                    "thumb": {
-                      "type": "string",
-                      "description": "Thumbnail for this media file"
-                    }
-                  }
-                }
-               },
-              "thumbnailUrl": {
-                "type": "string",
-                "description": "the Url for the thumbnail image for this playlist"
-              },
-              "playlistName": {
-                "type": "string",
-                "description": "Playlist name"
-              }
-            }
-          },
-          {
-            "type": "function",
-            "name": "callback",
-            "optional": true,
-            "description": "If an error occurs, runtime.lastError is set to the error message."
-          }
-        ]
-      },
       {
         "name": "getAllPlaylistItems",
         "type": "function",

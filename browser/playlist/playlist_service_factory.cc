@@ -10,6 +10,8 @@
 #include "base/feature_list.h"
 #include "brave/components/playlist/browser/features.h"
 #include "brave/components/playlist/browser/playlist_service.h"
+#include "brave/components/playlist/browser/playlist_youtubedown_component_manager.h"
+#include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/incognito_helpers.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
@@ -33,13 +35,17 @@ PlaylistService* PlaylistServiceFactory::GetForProfile(Profile* profile) {
 PlaylistServiceFactory::PlaylistServiceFactory()
     : BrowserContextKeyedServiceFactory(
           "PlaylistService",
-          BrowserContextDependencyManager::GetInstance()) {}
+          BrowserContextDependencyManager::GetInstance()) {
+  playlist_youtubedown_component_manager_.reset(
+      new PlaylistYoutubeDownComponentManager(g_browser_process->component_updater()));
+}
 
 PlaylistServiceFactory::~PlaylistServiceFactory() {}
 
 KeyedService* PlaylistServiceFactory::BuildServiceInstanceFor(
     content::BrowserContext* context) const {
-  return new PlaylistService(context);
+  return new PlaylistService(context,
+                             playlist_youtubedown_component_manager_.get());
 }
 
 content::BrowserContext* PlaylistServiceFactory::GetBrowserContextToUse(

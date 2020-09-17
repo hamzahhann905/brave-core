@@ -18,14 +18,11 @@
 #include "brave/components/playlist/browser/playlist_service.h"
 #include "brave/components/playlist/browser/playlist_types.h"
 #include "chrome/browser/profiles/profile.h"
-#include "extensions/browser/event_router.h"
 
 using playlist::CreatePlaylistParams;
 using playlist::PlaylistService;
 using playlist::PlaylistServiceFactory;
 
-namespace CreatePlaylistItem =
-    extensions::api::brave_playlist::CreatePlaylistItem;
 namespace GetPlaylistItem =
     extensions::api::brave_playlist::GetPlaylistItem;
 namespace DeletePlaylistItem =
@@ -34,8 +31,6 @@ namespace RecoverPlaylistItem =
     extensions::api::brave_playlist::RecoverPlaylistItem;
 namespace PlayItem = extensions::api::brave_playlist::PlayItem;
 namespace RequestDownload = extensions::api::brave_playlist::RequestDownload;
-namespace OnDownloadRequested =
-    extensions::api::brave_playlist::OnDownloadRequested;
 
 namespace {
 
@@ -47,39 +42,10 @@ PlaylistService* GetPlaylistService(content::BrowserContext* context) {
       Profile::FromBrowserContext(context));
 }
 
-CreatePlaylistParams GetCreatePlaylistParamsFromCreateParams(
-    const CreatePlaylistItem::Params::CreateParams& params) {
-  CreatePlaylistParams p;
-  p.playlist_name = params.playlist_name;
-  p.playlist_thumbnail_url = params.thumbnail_url;
-
-  for (const auto& file : params.video_media_files)
-    p.video_media_files.emplace_back(file.url, file.title);
-  for (const auto& file : params.audio_media_files)
-    p.audio_media_files.emplace_back(file.url, file.title);
-  return p;
-}
-
 }  // namespace
 
 namespace extensions {
 namespace api {
-
-ExtensionFunction::ResponseAction
-BravePlaylistCreatePlaylistItemFunction::Run() {
-  auto* service = GetPlaylistService(browser_context());
-  if (!service) {
-    return RespondNow(Error(kFeatureDisabled));
-  }
-
-  std::unique_ptr<CreatePlaylistItem::Params> params(
-      CreatePlaylistItem::Params::Create(*args_));
-  EXTENSION_FUNCTION_VALIDATE(params.get());
-
-  service->CreatePlaylistItem(
-      GetCreatePlaylistParamsFromCreateParams(params->create_params));
-  return RespondNow(NoArguments());
-}
 
 ExtensionFunction::ResponseAction
 BravePlaylistGetAllPlaylistItemsFunction::Run() {
@@ -164,14 +130,7 @@ ExtensionFunction::ResponseAction BravePlaylistRequestDownloadFunction::Run() {
       RequestDownload::Params::Create(*args_));
   EXTENSION_FUNCTION_VALIDATE(params.get());
 
-  auto event = std::make_unique<extensions::Event>(
-      extensions::events::BRAVE_PLAYLIST_ON_DOWNLOAD_REQUESTED,
-      OnDownloadRequested::kEventName,
-      OnDownloadRequested::Create(params->url),
-      browser_context());
-
-  extensions::EventRouter::Get(browser_context())->BroadcastEvent(
-      std::move(event));
+  service->RequestDownload(params->url);
 
   return RespondNow(NoArguments());
 }

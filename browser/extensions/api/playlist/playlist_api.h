@@ -13,16 +13,6 @@
 namespace extensions {
 namespace api {
 
-class BravePlaylistCreatePlaylistItemFunction : public ExtensionFunction {
- public:
-  DECLARE_EXTENSION_FUNCTION("bravePlaylist.createPlaylistItem", UNKNOWN)
-
- protected:
-  ~BravePlaylistCreatePlaylistItemFunction() override {}
-
-  ResponseAction Run() override;
-};
-
 class BravePlaylistGetAllPlaylistItemsFunction : public ExtensionFunction {
  public:
   DECLARE_EXTENSION_FUNCTION("bravePlaylist.getAllPlaylistItems", UNKNOWN)
@@ -78,6 +68,7 @@ class BravePlaylistDeleteAllPlaylistItemsFunction : public ExtensionFunction {
   ResponseAction Run() override;
 };
 
+// TODO(simonhong): Rename this api to CreatePlaylistItem.
 class BravePlaylistRequestDownloadFunction : public ExtensionFunction {
  public:
   DECLARE_EXTENSION_FUNCTION("bravePlaylist.requestDownload", UNKNOWN)

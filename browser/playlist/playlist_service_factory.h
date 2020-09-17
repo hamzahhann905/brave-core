@@ -6,6 +6,8 @@
 #ifndef BRAVE_BROWSER_PLAYLIST_PLAYLIST_SERVICE_FACTORY_H_
 #define BRAVE_BROWSER_PLAYLIST_PLAYLIST_SERVICE_FACTORY_H_
 
+#include <memory>
+
 #include "base/memory/singleton.h"
 #include "components/keyed_service/content/browser_context_keyed_service_factory.h"
 
@@ -13,6 +15,7 @@ class Profile;
 
 namespace playlist {
 class PlaylistService;
+class PlaylistYoutubeDownComponentManager;
 
 class PlaylistServiceFactory : public BrowserContextKeyedServiceFactory {
  public:
@@ -33,6 +36,11 @@ class PlaylistServiceFactory : public BrowserContextKeyedServiceFactory {
       content::BrowserContext* context) const override;
   content::BrowserContext* GetBrowserContextToUse(
       content::BrowserContext* context) const override;
+
+  // youtubedown.js component is global extension and it's used all service
+  // instances.
+  std::unique_ptr<PlaylistYoutubeDownComponentManager>
+      playlist_youtubedown_component_manager_;
 };
 
 }  // namespace playlist

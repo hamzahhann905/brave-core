@@ -84,23 +84,37 @@ bool DoGenerateHTMLFileOnTaskRunner(const base::FilePath& html_file_path) {
 
 }  // namespace
 
-PlaylistService::PlaylistService(content::BrowserContext* context)
+PlaylistService::PlaylistService(content::BrowserContext* context,
+                                 PlaylistYoutubeDownComponentManager* manager)
     : base_dir_(context->GetPath().Append(kBaseDirName)),
       prefs_(user_prefs::UserPrefs::Get(context)),
       weak_factory_(this) {
   content::URLDataSource::Add(
       context,
       std::make_unique<PlaylistDataSource>(this));
-
-
   media_file_download_manager_.reset(new PlaylistMediaFileDownloadManager(
       context, this, base_dir_));
   thumbnail_downloader_.reset(new PlaylistThumbnailDownloader(context, this));
+  download_request_manager_.reset(
+      new PlaylistDownloadRequestManager(context, this, manager));
 
   CleanUp();
 }
 
 PlaylistService::~PlaylistService() = default;
+
+void PlaylistService::Shutdown() {
+  download_request_manager_.reset();
+}
+
+void PlaylistService::RequestDownload(const std::string& url) {
+  download_request_manager_->GeneratePlaylistCreateParamsForYoutubeURL(url);
+}
+
+void PlaylistService::OnPlaylistCreationParamsReady(
+      const CreatePlaylistParams& params) {
+  CreatePlaylistItem(params);
+}
 
 void PlaylistService::NotifyPlaylistChanged(
     const PlaylistChangeParams& params) {

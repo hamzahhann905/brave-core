@@ -299,25 +299,12 @@ declare namespace chrome.bravePlaylist {
   type PlaylistType = { id: string, playlistName: string, titles: string[], thumbnailPath: string, videoMediaFilePath: string, audioMediaFilePath: string, partialReady: boolean }
   type PlaylistsChangeType = 'added' | 'deleted' | 'all_deleted' | 'aborted' | 'thumbnail_ready' | 'thumbnail_failed' | 'play_ready' | 'play_ready_partial'
 
-  type YTDSingleMuxedItem = { url: string, w: number, h: number, abr: number, size: number, file: string, thumb: string }
-  type YTDSegmentedMuxedItem = { url: string[], w: number, h: number, abr: number, size: number, file: string, thumb: string }
-  type YTDMuxedItem = YTDSingleMuxedItem | YTDSegmentedMuxedItem
-  type YTDSingleVideo = { url: string, w: number, h: number, size: number, file: string, thumb: string }
-  type YTDSingleAudio = { url: string, abr: number, size: number, file: string, thumb: string }
-  type YTDSegmentedVideo = { url: string[], w: number, h: number, size: number, file: string, thumb: string }
-  type YTDSegmentedAudio = { url: string[], abr: number, size: number, file: string, thumb: string }
-  type YTDUnmuxedItem = YTDSingleVideo | YTDSegmentedVideo | YTDSingleAudio | YTDSegmentedAudio
-  type YTDMediaItem = YTDMuxedItem | YTDUnmuxedItem
-
-  type CreateParamsMediaItem = { url: string, title: string, thumb: string }
-
   const onPlaylistItemStatusChanged: {
     addListener: (callback: (changeType: PlaylistChangeType, id: string) => void) => void
   }
   const onDownloadRequested: {
     addListener: (callback: (url: string) => void) => void
   }
-  const createPlaylistItem: (createParams: { videoMediaFiles: CreateParamsMediaItem[], audioMediaFiles: CreateParamsMediaItem[], thumbnailUrl: string, playlistName: string }) => void
   const getAllPlaylistItems: (callback: (playlist: PlaylistType[]) => void) => void
   const getPlaylistItem: (id: string, callback: (playlist: PlaylistType) => void) => void
   const recoverPlaylistItem: (id: string) => void
