@@ -39,10 +39,6 @@ export function saveShowClock (value: boolean): void {
   sendSavePref('showClock', value)
 }
 
-export function saveShowTopSites (value: boolean): void {
-  sendSavePref('showTopSites', value)
-}
-
 export function saveShowStats (value: boolean): void {
   sendSavePref('showStats', value)
 }

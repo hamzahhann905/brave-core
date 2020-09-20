@@ -25,6 +25,7 @@
       isBinanceSupported_: Boolean,
       isBraveTogetherSupported_: Boolean,
       isGeminiSupported_: Boolean,
+      showTopSites_: Boolean
     },
 
     /** @override */
@@ -34,6 +35,7 @@
       this.isBinanceSupported_ = false;
       this.isBraveTogetherSupported_ = false;
       this.isGeminiSupported_ = false;
+      this.showTopSites_ = false;
     },
 
     /** @override */
@@ -50,10 +52,20 @@
       this.browserProxy_.getIsGeminiSupported().then(isGeminiSupported => {
         this.isGeminiSupported_ = isGeminiSupported;
       })
+      this.browserProxy_.getShowTopSites().then(visible => {
+        this.showTopSites_ = visible;
+      })
 
       this.addWebUIListener('super-referral-active-state-changed', (isSuperReferralActive) => {
         this.isSuperReferralActive_ = isSuperReferralActive;
       })
+      this.addWebUIListener('ntp-shortcut-visibility-changed', (visible) => {
+        this.showTopSites_ = visible;
+      })
+    },
+
+    onShowTopSitesChange_: function() {
+      this.browserProxy_.toggleTopSitesVisible();
     }
   });
 })();

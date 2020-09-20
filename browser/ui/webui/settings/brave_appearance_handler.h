@@ -35,6 +35,9 @@ class BraveAppearanceHandler : public settings::SettingsPageUIHandler {
   void GetIsBinanceSupported(const base::ListValue* args);
   void GetIsBraveTogetherSupported(const base::ListValue* args);
   void GetIsGeminiSupported(const base::ListValue* args);
+  void ToggleTopSitesVisible(const base::ListValue* args);
+  void GetShowTopSites(const base::ListValue* args);
+  void TopSitesVisibleChanged(const std::string& pref_name);
 
   Profile* profile_ = nullptr;
   PrefChangeRegistrar local_state_change_registrar_;

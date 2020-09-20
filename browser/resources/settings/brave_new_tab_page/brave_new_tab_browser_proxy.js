@@ -28,6 +28,15 @@ cr.define('settings', function() {
      * @return {!Promise<Boolean>}
      */
     getIsGeminiSupported() {}
+
+    /**
+     * @return {!Promise<Boolean>}
+     */
+    getShowTopSites() {}
+
+    /**
+     */
+    toggleTopSitesVisible() {}
   }
 
   /**
@@ -52,6 +61,16 @@ cr.define('settings', function() {
     /** @override */
     getIsGeminiSupported() {
       return cr.sendWithPromise('getIsGeminiSupported')
+    }
+
+    /** @override */
+    getShowTopSites() {
+      return cr.sendWithPromise('getShowTopSites')
+    }
+
+    /** @override */
+    toggleTopSitesVisible() {
+      chrome.send('toggleTopSitesVisible', [])
     }
   }
 
