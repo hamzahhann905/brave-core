@@ -232,6 +232,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
   registry->RegisterBooleanPref(kNewTabPageShowTogether, true);
   registry->RegisterBooleanPref(kNewTabPageShowAddCard, true);
   registry->RegisterBooleanPref(kNewTabPageShowGemini, true);
+  registry->RegisterBooleanPref(kNewTabPageShowBitcoinDotCom, true);
 
   // Brave Wallet
 #if BUILDFLAG(BRAVE_WALLET_ENABLED)
