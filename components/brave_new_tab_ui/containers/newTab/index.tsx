@@ -654,7 +654,8 @@ class NewTabPage extends React.Component<Props, State> {
       showTogether,
       showGemini,
       showBitcoinDotCom,
-      geminiSupported
+      geminiSupported,
+      bitcoinDotComSupported
     } = this.props.newTabData
     const lookup = {
       'rewards': {
@@ -674,7 +675,7 @@ class NewTabPage extends React.Component<Props, State> {
         render: this.renderGeminiWidget.bind(this)
       },
       'bitcoinDotCom': {
-        display: showBitcoinDotCom,
+        display: showBitcoinDotCom && bitcoinDotComSupported,
         render: this.renderBitcoinDotComWidget.bind(this)
       }
     }
@@ -704,14 +705,15 @@ class NewTabPage extends React.Component<Props, State> {
       showTogether,
       geminiSupported,
       showGemini,
-      showBitcoinDotCom
+      showBitcoinDotCom,
+      bitcoinDotComSupported
     } = this.props.newTabData
     return [
       showRewards,
       togetherSupported && showTogether,
       binanceState.binanceSupported && showBinance,
       geminiSupported && showGemini,
-      showBitcoinDotCom
+      showBitcoinDotCom && bitcoinDotComSupported
     ].every((widget: boolean) => !widget)
   }
 
