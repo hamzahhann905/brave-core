@@ -125,12 +125,16 @@ class Client {
   InitializeCallback callback_;
 
   void Save();
-  void OnSaved(const Result result);
+  void OnSaved(
+      const Result result);
 
   void Load();
-  void OnLoaded(const Result result, const std::string& json);
+  void OnLoaded(
+      const Result result,
+      const std::string& encrypted_json);
 
-  bool FromJson(const std::string& json);
+  bool FromJson(
+      const std::string& json);
 
   AdsImpl* ads_;  // NOT OWNED
 

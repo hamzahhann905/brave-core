@@ -24,6 +24,7 @@
 #include "bat/ads/internal/server/redeem_unblinded_token/redeem_unblinded_token_delegate.h"
 #include "bat/ads/internal/server/refill_unblinded_tokens/refill_unblinded_tokens_delegate.h"
 #include "bat/ads/internal/timer.h"
+#include "bat/ads/internal/user_activity/user_activity.h"
 #include "bat/ads/internal/wallet/wallet_info.h"
 #include "bat/ads/mojom.h"
 
@@ -333,6 +334,8 @@ class AdsImpl
 
   std::vector<std::unique_ptr<PermissionRule>> CreatePermissionRules() const;
   std::vector<std::unique_ptr<ExclusionRule>> CreateExclusionRules() const;
+
+  UserActivity user_activity_;
 
   WalletInfo wallet_;
 

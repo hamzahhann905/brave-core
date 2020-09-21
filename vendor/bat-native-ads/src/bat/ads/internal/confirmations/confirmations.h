@@ -77,7 +77,7 @@ class Confirmations {
   void Load();
   void OnLoaded(
       const Result result,
-      const std::string& json);
+      const std::string& encrypted_json);
 
   AdsImpl* ads_;  // NOT OWNED
 

@@ -43,6 +43,7 @@
 #include "bat/ads/internal/frequency_capping/permission_rules/ads_per_day_frequency_cap.h"
 #include "bat/ads/internal/frequency_capping/permission_rules/ads_per_hour_frequency_cap.h"
 #include "bat/ads/internal/frequency_capping/permission_rules/minimum_wait_time_frequency_cap.h"
+#include "bat/ads/internal/frequency_capping/permission_rules/user_activity_frequency_cap.h"
 #include "bat/ads/internal/logging.h"
 #include "bat/ads/internal/platform/platform_helper.h"
 #include "bat/ads/internal/reports/reports.h"
@@ -309,6 +310,9 @@ void AdsImpl::OnForeground() {
 
   BLOG(1, "Browser window did become active");
 
+  user_activity_.RecordActivityForType(
+      UserActivityType::kBrowserWindowDidBecomeActive);
+
   if (PlatformHelper::GetInstance()->IsMobile() &&
       !ads_client_->CanShowBackgroundNotifications()) {
     StartDeliveringAdNotifications();
@@ -319,6 +323,9 @@ void AdsImpl::OnBackground() {
   is_foreground_ = false;
 
   BLOG(1, "Browser window did enter background");
+
+  user_activity_.RecordActivityForType(
+      UserActivityType::kBrowserWindowDidEnterBackground);
 
   if (PlatformHelper::GetInstance()->IsMobile() &&
       !ads_client_->CanShowBackgroundNotifications()) {
@@ -360,6 +367,8 @@ void AdsImpl::OnMediaPlaying(
   BLOG(2, "Started playing media for tab id " << tab_id);
 
   media_playing_.insert(tab_id);
+
+  user_activity_.RecordActivityForType(UserActivityType::kStartedPlayingMedia);
 }
 
 void AdsImpl::OnMediaStopped(
@@ -452,6 +461,16 @@ void AdsImpl::OnTabUpdated(
     active_tab_id_ = tab_id;
     previous_tab_url_ = active_tab_url_;
     active_tab_url_ = url;
+
+    UserActivityType user_activity_type;
+
+    if (url == "chrome://newtab") {
+      user_activity_type = UserActivityType::kOpenedNewTab;
+    } else {
+      user_activity_type = UserActivityType::kFocusedOnExistingTab;
+    }
+
+    user_activity_.RecordActivityForType(user_activity_type);
   } else {
     BLOG(7, "Tab id " << tab_id << " is occluded");
   }
@@ -474,6 +493,8 @@ void AdsImpl::OnTabClosed(
   OnMediaStopped(tab_id);
 
   sustained_ad_notifications_.erase(tab_id);
+
+  user_activity_.RecordActivityForType(UserActivityType::kClosedTab);
 }
 
 void AdsImpl::OnWalletUpdated(
@@ -1133,6 +1154,10 @@ std::vector<std::unique_ptr<PermissionRule>>
     AdsImpl::CreatePermissionRules() const {
   std::vector<std::unique_ptr<PermissionRule>> permission_rules;
 
+  std::unique_ptr<PermissionRule> ads_per_day_frequency_cap =
+      std::make_unique<AdsPerDayFrequencyCap>(this);
+  permission_rules.push_back(std::move(ads_per_day_frequency_cap));
+
   std::unique_ptr<PermissionRule> ads_per_hour_frequency_cap =
       std::make_unique<AdsPerHourFrequencyCap>(this);
   permission_rules.push_back(std::move(ads_per_hour_frequency_cap));
@@ -1141,9 +1166,9 @@ std::vector<std::unique_ptr<PermissionRule>>
       std::make_unique<MinimumWaitTimeFrequencyCap>(this);
   permission_rules.push_back(std::move(minimum_wait_time_frequency_cap));
 
-  std::unique_ptr<PermissionRule> ads_per_day_frequency_cap =
-      std::make_unique<AdsPerDayFrequencyCap>(this);
-  permission_rules.push_back(std::move(ads_per_day_frequency_cap));
+  std::unique_ptr<PermissionRule> user_activity_frequency_cap =
+      std::make_unique<UserActivityFrequencyCap>(user_activity_.get_history());
+  permission_rules.push_back(std::move(user_activity_frequency_cap));
 
   return permission_rules;
 }

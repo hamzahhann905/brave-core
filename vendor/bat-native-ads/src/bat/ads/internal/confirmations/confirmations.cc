@@ -7,6 +7,7 @@
 
 #include <functional>
 
+#include "components/os_crypt/os_crypt.h"
 #include "bat/ads/internal/ads_impl.h"
 #include "bat/ads/internal/logging.h"
 #include "bat/ads/internal/reports/reports.h"
@@ -186,8 +187,16 @@ void Confirmations::Save() {
   BLOG(9, "Saving confirmations state");
 
   const std::string json = state_->ToJson();
+
+  std::string encrypted_json;
+  if (!OSCrypt::EncryptString(json, &encrypted_json)) {
+    BLOG(0, "Failed to encrypt confirmations state");
+    return;
+  }
+
   auto callback = std::bind(&Confirmations::OnSaved, this, _1);
-  ads_->get_ads_client()->Save(kConfirmationsFilename, json, callback);
+  ads_->get_ads_client()->Save(kConfirmationsFilename, encrypted_json,
+      callback);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -245,7 +254,7 @@ void Confirmations::Load() {
 
 void Confirmations::OnLoaded(
     const Result result,
-    const std::string& json) {
+    const std::string& encrypted_json) {
   if (result != SUCCESS) {
     BLOG(3, "Confirmations state does not exist, creating default state");
 
@@ -254,6 +263,16 @@ void Confirmations::OnLoaded(
     state_.reset(new ConfirmationsState(ads_));
     Save();
   } else {
+    std::string json;
+    if (!OSCrypt::DecryptString(encrypted_json, &json)) {
+      BLOG(0, "Failed to decrypt confirmations state, resetting state");
+
+      state_.reset(new ConfirmationsState(ads_));
+      Save();
+
+      return;
+    }
+
     if (!state_->FromJson(json)) {
       BLOG(0, "Failed to load confirmations state");
 

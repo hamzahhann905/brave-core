@@ -9,6 +9,7 @@
 #include <functional>
 
 #include "base/guid.h"
+#include "components/os_crypt/os_crypt.h"
 #include "bat/ads/internal/ads_impl.h"
 #include "bat/ads/internal/logging.h"
 #include "bat/ads/internal/time_util.h"
@@ -539,8 +540,15 @@ void Client::Save() {
   BLOG(9, "Saving client state");
 
   auto json = client_state_->ToJson();
+
+  std::string encrypted_json;
+  if (!OSCrypt::EncryptString(json, &encrypted_json)) {
+    BLOG(0, "Failed to encrypt client state");
+    return;
+  }
+
   auto callback = std::bind(&Client::OnSaved, this, _1);
-  ads_->get_ads_client()->Save(kClientFilename, json, callback);
+  ads_->get_ads_client()->Save(kClientFilename, encrypted_json, callback);
 }
 
 void Client::OnSaved(
@@ -563,7 +571,7 @@ void Client::Load() {
 
 void Client::OnLoaded(
     const Result result,
-    const std::string& json) {
+    const std::string& encrypted_json) {
   if (result != SUCCESS) {
     BLOG(3, "Client state does not exist, creating default state");
 
@@ -572,6 +580,16 @@ void Client::OnLoaded(
     client_state_.reset(new ClientState());
     Save();
   } else {
+    std::string json;
+    if (!OSCrypt::DecryptString(encrypted_json, &json)) {
+      BLOG(0, "Failed to decrypt client state, resetting state");
+
+      client_state_.reset(new ClientState());
+      Save();
+
+      return;
+    }
+
     if (!FromJson(json)) {
       BLOG(0, "Failed to load client state");
 

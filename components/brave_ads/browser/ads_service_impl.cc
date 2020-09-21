@@ -5,6 +5,7 @@
 
 #include "brave/components/brave_ads/browser/ads_service_impl.h"
 
+#include <algorithm>
 #include <limits>
 #include <utility>
 
@@ -545,11 +546,11 @@ bool AdsServiceImpl::ShouldAllowAdConversionTracking() const {
 }
 
 uint64_t AdsServiceImpl::GetAdsPerHour() const {
-  return GetUint64Pref(prefs::kAdsPerHour);
+  return std::max(0, std::min(GetUint64Pref(prefs::kAdsPerHour), 5));
 }
 
 uint64_t AdsServiceImpl::GetAdsPerDay() const {
-  return GetUint64Pref(prefs::kAdsPerDay);
+  return std::max(0, std::min(GetUint64Pref(prefs::kAdsPerDay), 20));
 }
 
 bool AdsServiceImpl::ShouldAllowAdsSubdivisionTargeting() const {
