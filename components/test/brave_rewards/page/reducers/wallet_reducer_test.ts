@@ -21,15 +21,6 @@ describe('wallet reducer', () => {
     }
   })
 
-  it('should handle initial state', () => {
-    const assertion = reducers(undefined, actions.createWallet())
-    const expectedState: Rewards.State = { ...defaultState }
-    expectedState.initializing = true
-    expect(assertion).toEqual({
-      rewardsData: expectedState
-    })
-  })
-
   describe('ON_RECOVER_WALLET_DATA', () => {
     let chromeSpy: jest.SpyInstance
 
@@ -52,7 +43,6 @@ describe('wallet reducer', () => {
       })
 
       const expectedState: Rewards.State = { ...defaultState }
-      expectedState.ui.walletCorrupted = true
 
       // No chrome.send calls should be made in the event of a failure
       expect(chromeSpy).toHaveBeenCalledTimes(0)
