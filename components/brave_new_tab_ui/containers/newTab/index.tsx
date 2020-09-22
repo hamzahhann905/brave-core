@@ -396,6 +396,10 @@ class NewTabPage extends React.Component<Props, State> {
     }
   }
 
+  buyBitcoinDotComCrypto = () => {
+    this.props.actions.buyBitcoinDotComCrypto()
+  }
+
   onBinanceUserTLD = (userTLD: NewTab.BinanceTLD) => {
     this.props.actions.onBinanceUserTLD(userTLD)
   }
@@ -926,6 +930,7 @@ class NewTabPage extends React.Component<Props, State> {
         hideWidget={this.toggleShowBitcoinDotCom}
         showContent={showContent}
         onShowContent={this.setForegroundStackWidget.bind(this, 'bitcoinDotCom')}
+        onBuyCrypto={this.buyBitcoinDotComCrypto}
       />
     )
   }

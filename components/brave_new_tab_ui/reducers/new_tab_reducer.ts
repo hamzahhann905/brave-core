@@ -180,6 +180,10 @@ export const newTabReducer: Reducer<NewTab.State | undefined> = (state: NewTab.S
       }
       break
 
+    case types.BUY_BITCOIN_DOT_COM_CRYPTO:
+      chrome.moonpay.onBuyBitcoinDotComCrypto()
+      break
+
     default:
       break
   }
