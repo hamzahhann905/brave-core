@@ -16,7 +16,6 @@ import {
   deleteMostVisitedTile,
   reorderMostVisitedTile,
   restoreMostVisitedDefaults,
-  setMostVisitedSettings,
   undoMostVisitedTileAction
 } from '../api/topSites'
 
@@ -38,8 +37,7 @@ export const gridSitesReducer: Reducer<NewTab.GridSitesState | undefined> = (
 
   switch (action.type) {
     case types.GRID_SITES_DATA_UPDATED: {
-      const { gridSites, customLinksEnabled, visible } = payload
-      setMostVisitedSettings(customLinksEnabled, visible, false)
+      const { gridSites } = payload
       state = gridSitesState.tilesUpdated(state, gridSites)
       break
     }

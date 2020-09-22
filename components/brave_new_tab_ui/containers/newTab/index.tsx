@@ -25,13 +25,6 @@ import BrandedWallpaperLogo from '../../components/default/brandedWallpaper/logo
 import VisibilityTimer from '../../helpers/visibilityTimer'
 import { generateQRData } from '../../binance-utils'
 
-// API
-import {
-  customLinksEnabled,
-  isVisible,
-  setMostVisitedSettings
-} from '../../api/topSites'
-
 // Types
 import * as newTabActions from '../../actions/new_tab_actions'
 import * as gridSitesActions from '../../actions/grid_sites_actions'
@@ -210,11 +203,13 @@ class NewTabPage extends React.Component<Props, State> {
   }
 
   toggleShowTopSites = () => {
-    setMostVisitedSettings(customLinksEnabled(), !isVisible(), true)
+    const { showTopSites, customLinksEnabled } = this.props.newTabData
+    this.props.actions.setMostVisitedSettings(!showTopSites, customLinksEnabled)
   }
 
   toggleCustomLinksEnabled = () => {
-    setMostVisitedSettings(!customLinksEnabled(), isVisible(), true)
+    const { showTopSites, customLinksEnabled } = this.props.newTabData
+    this.props.actions.setMostVisitedSettings(showTopSites, !customLinksEnabled)
   }
 
   toggleShowRewards = () => {
@@ -877,7 +872,7 @@ class NewTabPage extends React.Component<Props, State> {
 
     const hasImage = this.imageSource !== undefined
     const isShowingBrandedWallpaper = newTabData.brandedWallpaperData ? true : false
-    const showTopSites = !!this.props.gridSitesData.gridSites.length && isVisible()
+    const showTopSites = !!this.props.gridSitesData.gridSites.length && newTabData.showTopSites
     const cryptoContent = this.renderCryptoContent()
 
     return (
@@ -932,7 +927,7 @@ class NewTabPage extends React.Component<Props, State> {
               <Page.GridItemTopSites>
                 <TopSitesGrid
                   actions={actions}
-                  customLinksEnabled={customLinksEnabled()}
+                  customLinksEnabled={newTabData.customLinksEnabled}
                   widgetTitle={getLocale('topSitesTitle')}
                   gridSites={gridSitesData.gridSites}
                   menuPosition={'right'}
@@ -984,8 +979,8 @@ class NewTabPage extends React.Component<Props, State> {
           showBackgroundImage={newTabData.showBackgroundImage}
           showClock={newTabData.showClock}
           showStats={newTabData.showStats}
-          showTopSites={isVisible()}
-          customLinksEnabled={customLinksEnabled()}
+          showTopSites={newTabData.showTopSites}
+          customLinksEnabled={newTabData.customLinksEnabled}
           showRewards={newTabData.showRewards}
           showBinance={newTabData.showBinance}
           brandedWallpaperOptIn={newTabData.brandedWallpaperOptIn}

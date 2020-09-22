@@ -42,3 +42,9 @@ export const removeStackWidget = (widget: NewTab.StackWidget) => action(types.RE
 export const setForegroundStackWidget = (widget: NewTab.StackWidget) => action(types.SET_FOREGROUND_STACK_WIDGET, {
   widget
 })
+
+export const setMostVisitedSettings = (showTopSites: boolean, customLinksEnabled: boolean) =>
+  action(types.SET_MOST_VISITED_SITES, { showTopSites, customLinksEnabled })
+
+export const topSitesStateUpdated = (newShowTopSites: boolean, newCustomLinksEnabled: boolean) =>
+  action(types.UPDATE_TOP_SITES_STATE, { newShowTopSites, newCustomLinksEnabled })

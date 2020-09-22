@@ -17,6 +17,7 @@ import { InitialData } from '../api/initialData'
 import { registerViewCount } from '../api/brandedWallpaper'
 import * as preferencesAPI from '../api/preferences'
 import * as storage from '../storage/new_tab_storage'
+import { setMostVisitedSettings } from '../api/topSites'
 
 let sideEffectState: NewTab.State = storage.load()
 
@@ -178,6 +179,24 @@ export const newTabReducer: Reducer<NewTab.State | undefined> = (state: NewTab.S
         widgetStackOrder: newWidgetStackOrder
       }
       break
+
+    case types.SET_MOST_VISITED_SITES: {
+      const { showTopSites, customLinksEnabled } = payload
+      performSideEffect(async function (state) {
+        setMostVisitedSettings(customLinksEnabled, showTopSites)
+      })
+      break
+    }
+
+    case types.UPDATE_TOP_SITES_STATE: {
+      const { newShowTopSites, newCustomLinksEnabled } = payload
+      state = {
+        ...state,
+        showTopSites: newShowTopSites,
+        customLinksEnabled: newCustomLinksEnabled
+      }
+      break
+    }
 
     default:
       break
