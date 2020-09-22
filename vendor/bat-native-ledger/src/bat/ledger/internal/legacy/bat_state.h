@@ -28,8 +28,6 @@ class LegacyBatState {
 
   void Load(ledger::ResultCallback callback);
 
-  bool GetRewardsMainEnabled() const;
-
   double GetAutoContributionAmount() const;
 
   bool GetUserChangedContribution() const;

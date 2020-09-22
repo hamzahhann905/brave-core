@@ -17,6 +17,7 @@
 #include "brave/components/brave_extension/grit/brave_extension.h"
 #include "brave/components/brave_rewards/browser/buildflags/buildflags.h"
 #include "brave/components/brave_rewards/common/pref_names.h"
+#include "brave/components/brave_ads/common/pref_names.h"
 #include "brave/components/brave_rewards/resources/extension/grit/brave_rewards_extension_resources.h"
 #include "brave/components/brave_webtorrent/grit/brave_webtorrent_resources.h"
 #include "chrome/browser/extensions/extension_service.h"
@@ -45,8 +46,11 @@ BraveComponentLoader::BraveComponentLoader(ExtensionSystem* extension_system,
       profile_prefs_(profile->GetPrefs()) {
 #if BUILDFLAG(BRAVE_REWARDS_ENABLED)
   pref_change_registrar_.Init(profile_prefs_);
-  pref_change_registrar_.Add(brave_rewards::prefs::kEnabled,
-      base::Bind(&BraveComponentLoader::HandleRewardsEnabledStatus,
+  pref_change_registrar_.Add(brave_rewards::prefs::kAutoContributeEnabled,
+      base::Bind(&BraveComponentLoader::CheckRewardsStatus,
+      base::Unretained(this)));
+  pref_change_registrar_.Add(brave_ads::prefs::kEnabled,
+      base::Bind(&BraveComponentLoader::CheckRewardsStatus,
       base::Unretained(this)));
 #endif
 }
@@ -106,7 +110,7 @@ void BraveComponentLoader::AddDefaultComponentExtensions(
 
 #if BUILDFLAG(BRAVE_REWARDS_ENABLED)
   // Enable rewards extension if already opted-in
-  HandleRewardsEnabledStatus();
+  CheckRewardsStatus();
 #endif
 
 #if BUILDFLAG(BRAVE_WALLET_ENABLED)
@@ -132,10 +136,13 @@ void BraveComponentLoader::AddRewardsExtension() {
   }
 }
 
-void BraveComponentLoader::HandleRewardsEnabledStatus() {
-  const bool is_rewards_enabled = profile_prefs_->GetBoolean(
-      brave_rewards::prefs::kEnabled);
-  if (is_rewards_enabled) {
+void BraveComponentLoader::CheckRewardsStatus() {
+  const bool is_ac_enabled = profile_prefs_->GetBoolean(
+      brave_rewards::prefs::kAutoContributeEnabled);
+  const bool is_ads_enabled = profile_prefs_->GetBoolean(
+      brave_ads::prefs::kEnabled);
+
+  if (is_ac_enabled || is_ads_enabled) {
     AddRewardsExtension();
   }
 }

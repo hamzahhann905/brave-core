@@ -64,8 +64,6 @@ void WalletCreate::OnCreate(
   wallet->payment_id = payment_id;
   ledger_->wallet()->SetWallet(std::move(wallet));
 
-  ledger_->state()->SetRewardsMainEnabled(true);
-  ledger_->state()->SetAutoContributeEnabled(true);
   ledger_->publisher()->CalcScoreConsts(
       ledger_->state()->GetPublisherMinVisitTime());
   ledger_->state()->ResetReconcileStamp();

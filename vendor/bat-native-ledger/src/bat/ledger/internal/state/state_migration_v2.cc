@@ -49,10 +49,6 @@ void StateMigrationV2::OnLoadState(
   }
 
   ledger_->ledger_client()->SetBooleanState(
-      kEnabled,
-      legacy_state_->GetRewardsMainEnabled());
-
-  ledger_->ledger_client()->SetBooleanState(
       kAutoContributeEnabled,
       legacy_state_->GetAutoContributeEnabled());
 

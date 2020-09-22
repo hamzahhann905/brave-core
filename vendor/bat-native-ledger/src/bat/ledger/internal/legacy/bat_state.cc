@@ -65,10 +65,6 @@ void LegacyBatState::OnLoad(
   callback(ledger::type::Result::LEDGER_OK);
 }
 
-bool LegacyBatState::GetRewardsMainEnabled() const {
-  return state_->rewards_enabled;
-}
-
 double LegacyBatState::GetAutoContributionAmount() const {
   return state_->fee_amount;
 }

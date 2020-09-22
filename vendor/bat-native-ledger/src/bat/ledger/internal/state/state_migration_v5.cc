@@ -49,11 +49,6 @@ void StateMigrationV5::Migrate(ledger::ResultCallback callback) {
       kPaymentId,
       ledger_->ledger_client()->GetStringState(kPaymentId)));
 
-  // Enabled
-  enabled = ledger_->ledger_client()->GetBooleanState(kEnabled);
-  events.insert(
-      std::make_pair(kEnabled, std::to_string(enabled)));
-
   // Next reconcile
   const auto reconcile_stamp = ledger_->ledger_client()->GetUint64State(
       kNextReconcileStamp);

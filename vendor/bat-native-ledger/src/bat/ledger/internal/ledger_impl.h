@@ -102,8 +102,6 @@ class LedgerImpl : public ledger::Ledger {
       const bool execute_create_script,
       ledger::ResultCallback callback) override;
 
-  void CreateWallet(ledger::ResultCallback callback) override;
-
   void OneTimeTip(
       const std::string& publisher_key,
       const double amount,
@@ -149,8 +147,6 @@ class LedgerImpl : public ledger::Ledger {
 
   void GetExcludedList(ledger::PublisherInfoListCallback callback) override;
 
-  void SetRewardsMainEnabled(bool enabled) override;
-
   void SetPublisherMinVisitTime(int duration_in_seconds) override;
 
   void SetPublisherMinVisits(int visits) override;
@@ -164,8 +160,6 @@ class LedgerImpl : public ledger::Ledger {
   void SetAutoContributeEnabled(bool enabled) override;
 
   uint64_t GetReconcileStamp() override;
-
-  bool GetRewardsMainEnabled() override;
 
   int GetPublisherMinVisitTime() override;
 
@@ -215,8 +209,6 @@ class LedgerImpl : public ledger::Ledger {
       ledger::ResultCallback callback) override;
 
   void RestorePublishers(ledger::ResultCallback callback) override;
-
-  bool IsWalletCreated() override;
 
   void GetPublisherActivityFromUrl(
       uint64_t windowId,

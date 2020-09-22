@@ -49,9 +49,7 @@ using GetPublisherAllowNonVerifiedCallback = base::Callback<void(bool)>;
 using GetPublisherAllowVideosCallback = base::Callback<void(bool)>;
 using GetAutoContributeEnabledCallback = base::OnceCallback<void(bool)>;
 using GetReconcileStampCallback = base::Callback<void(uint64_t)>;
-using IsWalletCreatedCallback = base::Callback<void(bool)>;
 using GetPendingContributionsTotalCallback = base::Callback<void(double)>;
-using GetRewardsMainEnabledCallback = base::Callback<void(bool)>;
 using GetRewardsInternalsInfoCallback =
     base::OnceCallback<void(ledger::type::RewardsInternalsInfoPtr info)>;
 using SaveRecurringTipCallback = base::OnceCallback<void(bool)>;
@@ -88,8 +86,6 @@ using ProcessRewardsPageUrlCallback = base::OnceCallback<void(
     const std::string&,
     const std::string&,
     const std::map<std::string, std::string>&)>;
-using CreateWalletCallback =
-    base::OnceCallback<void(const ledger::type::Result)>;
 using ClaimPromotionCallback = base::OnceCallback<void(
     const ledger::type::Result,
     const std::string&,
@@ -136,7 +132,6 @@ class RewardsService : public KeyedService {
 
   virtual bool IsInitialized() = 0;
 
-  virtual void CreateWallet(CreateWalletCallback callback) = 0;
   virtual void GetRewardsParameters(GetRewardsParametersCallback callback) = 0;
   virtual void GetActivityInfoList(
       const uint32_t start,
@@ -178,7 +173,6 @@ class RewardsService : public KeyedService {
 
   virtual void GetReconcileStamp(
       const GetReconcileStampCallback& callback) = 0;
-  virtual void SetRewardsMainEnabled(bool enabled) = 0;
   virtual void GetPublisherMinVisitTime(
       const GetPublisherMinVisitTimeCallback& callback) = 0;
   virtual void SetPublisherMinVisitTime(int duration_in_seconds) const = 0;
@@ -199,7 +193,6 @@ class RewardsService : public KeyedService {
       const uint32_t month,
       const uint32_t year,
       GetBalanceReportCallback callback) = 0;
-  virtual void IsWalletCreated(const IsWalletCreatedCallback& callback) = 0;
   virtual void GetPublisherActivityFromUrl(
       uint64_t windowId,
       const std::string& url,
@@ -233,8 +226,6 @@ class RewardsService : public KeyedService {
     const GetAutoContributePropertiesCallback& callback) = 0;
   virtual void GetPendingContributionsTotal(
     const GetPendingContributionsTotalCallback& callback) = 0;
-  virtual void GetRewardsMainEnabled(
-    const GetRewardsMainEnabledCallback& callback) const = 0;
   virtual void GetRewardsInternalsInfo(
       GetRewardsInternalsInfoCallback callback) = 0;
   virtual void AddPrivateObserver(
