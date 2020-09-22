@@ -34,24 +34,17 @@ class GURL;
 
 namespace playlist {
 
-// TODO(simonhong): Remove this. The result will have true/false simply.
-enum class MediaFileGenResult {
-  FAILED,
-  SUCCESS,  // All source files are unified into final media file.
-  PARTIAL_SUCCESS,  // Some source files are skipped.
-};
-
 // Handle one Playlist at once.
 class PlaylistMediaFileDownloader {
  public:
   class Delegate {
    public:
     // Called when target media file generation succeed.
-    // TODO(simonhong): Delete |partial|.
-    virtual void OnMediaFileReady(base::Value playlist_value,
-                                  bool partial) = 0;
+    virtual void OnMediaFileReady(const std::string& id,
+                                  const std::string& media_file_path_key,
+                                  const std::string& media_file_path) = 0;
     // Called when target media file generation failed.
-    virtual void OnMediaFileGenerationFailed(base::Value playlist_value) = 0;
+    virtual void OnMediaFileGenerationFailed(const std::string& id) = 0;
 
    protected:
     virtual ~Delegate() {}
@@ -91,19 +84,17 @@ class PlaylistMediaFileDownloader {
                              int index,
                              base::FilePath path);
   void StartSingleMediaFileGeneration();
-  // See the comments of DoGenerateSingleMediaFile() about
-  // the meaning of |result|.
-  void OnSingleMediaFileGenerated(MediaFileGenResult result);
+  void OnSingleMediaFileGenerated(const std::string& id, bool success);
 
   // True when all source media files are downloaded.
   // If it's true, single media file will be generated.
   bool IsDownloadFinished();
   int GetNumberOfMediaFileSources();
 
-  void NotifyFail();
-  // If |partial| is true, not all source files are used for media file
-  // generation for some reason.
-  void NotifySucceed(bool partial);
+  void NotifyFail(const std::string& id);
+  void NotifySucceed(const std::string& id,
+                     const std::string& media_file_path_key,
+                     const std::string& media_file_path);
 
   base::SequencedTaskRunner* task_runner();
 
@@ -124,11 +115,6 @@ class PlaylistMediaFileDownloader {
 
   // true when this class is working for playlist now.
   bool in_progress_ = false;
-
-  // true when user deletes currently working playlist.
-  // If true, this doesn't notify to Delegate after finishing media file
-  // generation.
-  bool cancelled_ = false;
 
   scoped_refptr<base::SequencedTaskRunner> task_runner_;
 

@@ -41,40 +41,44 @@ void PlaylistMediaFileDownloadManager::GenerateMediaFileForPlaylistItem(
   // If either media file controller is generating a playlist media file,
   // delay the next playlist generation. It will be triggered when the current
   // one is finished.
-  if (!video_media_file_downloader_->in_progress() &&
-      !audio_media_file_downloader_->in_progress()) {
+  if (!IsCurrentDownloadingInProgress())
     GenerateMediaFiles();
-  }
 }
 
 void PlaylistMediaFileDownloadManager::CancelDownloadRequest(
     const std::string& id) {
   // Cancel if currently downloading item is id.
-  if (video_media_file_downloader_->current_playlist_id() == id) {
-    video_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
-    audio_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
+  // Otherwise, GetNextPlaylistItemTarget() will drop canceled one.
+  if (GetCurrentDownloadingPlaylistItemID() == id) {
+    CancelCurrentDownloadingPlaylistItem();
+    GenerateMediaFiles();
+    return;
   }
+}
 
-  // Bug - should schedule next generation job.
-  // Need to check each downloader completed cancel request.
-  // We should not ask new job before canel request completion.
-  // TODO(simonhong): Remove from queue.
+void PlaylistMediaFileDownloadManager::ResetCurrentPlaylistItemInfo() {
+  current_playlist_item_id_.clear();
+  current_playlist_item_audio_file_path_.clear();
+  current_playlist_item_video_file_path_.clear();
 }
 
 void PlaylistMediaFileDownloadManager::CancelAllDownloadRequests() {
-  video_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
-  audio_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
+  CancelCurrentDownloadingPlaylistItem();
   pending_media_file_creation_jobs_ = base::queue<base::Value>();
 }
 
 void PlaylistMediaFileDownloadManager::GenerateMediaFiles() {
-  DCHECK(!video_media_file_downloader_->in_progress() &&
-         !audio_media_file_downloader_->in_progress());
-  DCHECK(!pending_media_file_creation_jobs_.empty());
+  DCHECK(!IsCurrentDownloadingInProgress());
+  ResetCurrentPlaylistItemInfo();
 
-  base::Value video_value(std::move(pending_media_file_creation_jobs_.front()));
+  if (pending_media_file_creation_jobs_.empty())
+    return;
+
+  base::Value video_value = GetNextPlaylistItemTarget();
+  if (video_value.is_none())
+    return;
+
   base::Value audio_value = video_value.Clone();
-  pending_media_file_creation_jobs_.pop();
   VLOG(2) << __func__ << ": "
           << *video_value.FindStringKey(kPlaylistPlaylistNameKey);
 
@@ -84,40 +88,67 @@ void PlaylistMediaFileDownloadManager::GenerateMediaFiles() {
                                                         base_dir_);
 }
 
+base::Value PlaylistMediaFileDownloadManager::GetNextPlaylistItemTarget() {
+  while(!pending_media_file_creation_jobs_.empty()) {
+    base::Value playlist_item(
+        std::move(pending_media_file_creation_jobs_.front()));
+    pending_media_file_creation_jobs_.pop();
+    const std::string playlist_id =
+        *playlist_item.FindStringKey(kPlaylistIDKey);
+    if (delegate_->IsValidPlaylistItem(playlist_id)) {
+      current_playlist_item_id_ = playlist_id;
+      return playlist_item;
+    }
+  }
+
+  return {};
+}
+
+std::string PlaylistMediaFileDownloadManager::
+GetCurrentDownloadingPlaylistItemID() const {
+  return video_media_file_downloader_->current_playlist_id();
+}
+
+void PlaylistMediaFileDownloadManager::CancelCurrentDownloadingPlaylistItem() {
+  video_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
+  audio_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
+}
+
+bool PlaylistMediaFileDownloadManager::IsCurrentDownloadingInProgress() const {
+  return video_media_file_downloader_->in_progress() ||
+         audio_media_file_downloader_->in_progress();
+}
+
 void PlaylistMediaFileDownloadManager::OnMediaFileReady(
-    base::Value playlist_value,
-    bool partial) {
-  // TODO(simonhong): Revisit how |partial| handles.
-  if (video_media_file_downloader_->in_progress() ||
-      audio_media_file_downloader_->in_progress())
-    partial = true;
-  VLOG(2) << __func__ << ": "
-          << *playlist_value.FindStringKey(kPlaylistPlaylistNameKey) << " "
-          << partial;
-
-  delegate_->OnMediaFileReady(std::move(playlist_value), partial);
-
-  // TODO(simonhong): Revisit how |partial| handles.
-  // If partial is true here, one of video or audio media files are not ready.
-  if (partial)
+    const std::string& id,
+    const std::string& media_file_path_key,
+    const std::string& media_file_path) {
+  if (media_file_path_key == kPlaylistAudioMediaFilePathKey) {
+    current_playlist_item_audio_file_path_ = media_file_path;
+  } else {
+    current_playlist_item_video_file_path_ = media_file_path;
+  }
+  if (IsCurrentDownloadingInProgress())
     return;
 
-  if (!pending_media_file_creation_jobs_.empty())
-    GenerateMediaFiles();
+  VLOG(2) << __func__ << ": " << id << " is ready.";
+
+  delegate_->OnMediaFileReady(id,
+                              current_playlist_item_audio_file_path_,
+                              current_playlist_item_video_file_path_);
+
+  ResetCurrentPlaylistItemInfo();
+  GenerateMediaFiles();
 }
 
 void PlaylistMediaFileDownloadManager::OnMediaFileGenerationFailed(
-    base::Value playlist_value) {
-  VLOG(2) << __func__ << ": "
-          << *playlist_value.FindStringKey(kPlaylistPlaylistNameKey);
+    const std::string& id) {
+  VLOG(2) << __func__ << ": " << id;
 
-  video_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
-  audio_media_file_downloader_->RequestCancelCurrentPlaylistGeneration();
+  CancelCurrentDownloadingPlaylistItem();
+  delegate_->OnMediaFileGenerationFailed(id);
 
-  delegate_->OnMediaFileGenerationFailed(std::move(playlist_value));
-
-  if (!pending_media_file_creation_jobs_.empty())
-    GenerateMediaFiles();
+  GenerateMediaFiles();
 }
 
 }  // namespace playlist

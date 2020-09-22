@@ -61,7 +61,7 @@ base::Value GetValueFromPlaylistInfo(const PlaylistInfo& info) {
                               info.video_media_file_path);
   playlist_value.SetStringKey(kPlaylistAudioMediaFilePathKey,
                               info.audio_media_file_path);
-  playlist_value.SetBoolKey(kPlaylistPartialReadyKey, info.partial_ready);
+  playlist_value.SetBoolKey(kPlaylistReadyKey, info.ready);
   playlist_value.SetKey(kPlaylistTitlesKey,
                         GetTitleValueFromCreateParams(info.create_params));
   playlist_value.SetKey(kPlaylistCreateParamsKey,

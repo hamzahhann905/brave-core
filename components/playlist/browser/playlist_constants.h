@@ -20,7 +20,7 @@ constexpr char kPlaylistIDKey[] = "id";
 constexpr char kPlaylistThumbnailPathKey[] = "thumbnailPath";
 constexpr char kPlaylistVideoMediaFilePathKey[] = "videoMediaFilePath";
 constexpr char kPlaylistAudioMediaFilePathKey[] = "audioMediaFilePath";
-constexpr char kPlaylistPartialReadyKey[] = "partialReady";
+constexpr char kPlaylistReadyKey[] = "ready";
 constexpr char kPlaylistTitlesKey[] = "titles";
 constexpr char kPlaylistCreateParamsKey[] = "createParams";
 

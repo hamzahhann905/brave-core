@@ -70,8 +70,11 @@ class PlaylistService : public KeyedService,
   void Shutdown() override;
 
   // PlaylistMediaFileDownloadManager::Delegate overrides:
-  void OnMediaFileReady(base::Value playlist_value, bool partial) override;
-  void OnMediaFileGenerationFailed(base::Value playlist_value) override;
+  void OnMediaFileReady(const std::string& id,
+                        const std::string& audio_file_path,
+                        const std::string& video_file_path) override;
+  void OnMediaFileGenerationFailed(const std::string& id) override;
+  bool IsValidPlaylistItem(const std::string& id) override;
 
   // PlaylistThumbnailDownloader::Delegate overrides:
   void OnThumbnailDownloaded(const std::string& id,
@@ -100,6 +103,7 @@ class PlaylistService : public KeyedService,
   // index.html is only used for demo (brave://playlist)
   void GenerateIndexHTMLFile(const base::FilePath& playlist_path);
   void OnHTMLFileGenerated(bool generated);
+  bool HasPrefStorePlaylistItem(const std::string& id) const;
 
   // Playlist creation can be ready to play two steps.
   // Step 1. When creation is requested, requested info is put to db and

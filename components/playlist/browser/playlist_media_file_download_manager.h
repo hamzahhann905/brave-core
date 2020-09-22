@@ -13,7 +13,7 @@
 
 namespace base {
 class Value;
-}  // namespace bas<p></p>e
+}  // namespace base
 
 namespace content {
 class BrowserContext;
@@ -26,11 +26,11 @@ class PlaylistMediaFileDownloadManager :
  public:
   class Delegate {
    public:
-    // Called when target media file generation succeed.
-    virtual void OnMediaFileReady(base::Value playlist_value,
-                                  bool partial) = 0;
-    // Called when target media file generation failed.
-    virtual void OnMediaFileGenerationFailed(base::Value playlist_value) = 0;
+    virtual void OnMediaFileReady(const std::string& id,
+                                  const std::string& audio_file_path,
+                                  const std::string& video_file_path) = 0;
+    virtual void OnMediaFileGenerationFailed(const std::string& id) = 0;
+    virtual bool IsValidPlaylistItem(const std::string& id) = 0;
 
    protected:
     virtual ~Delegate() {}
@@ -51,17 +51,25 @@ class PlaylistMediaFileDownloadManager :
   void CancelAllDownloadRequests();
 
  private:
-  // PlaylistMediaFileController::Delegate overrides:
-  void OnMediaFileReady(base::Value playlist_value, bool partial) override;
-  void OnMediaFileGenerationFailed(base::Value playlist_value) override;
+  // PlaylistMediaFileDownloader::Delegate overrides:
+  void OnMediaFileReady(const std::string& id,
+                        const std::string& media_file_path_key,
+                        const std::string& media_file_path) override;
+  void OnMediaFileGenerationFailed(const std::string& id) override;
 
   void GenerateMediaFiles();
+  base::Value GetNextPlaylistItemTarget();
+  std::string GetCurrentDownloadingPlaylistItemID() const;
+  void CancelCurrentDownloadingPlaylistItem();
+  bool IsCurrentDownloadingInProgress() const;
+  void ResetCurrentPlaylistItemInfo();
 
   const base::FilePath base_dir_;
   Delegate* delegate_;
-  // TODO(simonhong): Use another container. It's not good to handle cancel
-  // request.
   base::queue<base::Value> pending_media_file_creation_jobs_;
+  std::string current_playlist_item_id_;
+  std::string current_playlist_item_audio_file_path_;
+  std::string current_playlist_item_video_file_path_;
 
   // TODO(simonhong): Unify these two downloader into one. Using two downloaders
   // just increase complexity.

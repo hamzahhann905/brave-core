@@ -92,7 +92,7 @@ bool AppendToFileThenDeleteSource(const base::FilePath& source_path,
   return !got_error;
 }
 
-MediaFileGenResult DoGenerateSingleMediaFile(
+bool DoGenerateSingleMediaFile(
     const base::FilePath& playlist_dir_path,
     const base::FilePath::StringType& source_media_files_dir,
     const base::FilePath::StringType& unified_media_file_name,
@@ -111,19 +111,19 @@ MediaFileGenResult DoGenerateSingleMediaFile(
       unified_media_file_path,
       base::File::FLAG_CREATE | base::File::FLAG_WRITE);
   if (!unified_media_file.IsValid())
-    return MediaFileGenResult::FAILED;
+    return false;
 
   const size_t kReadBufferSize = 1 << 16;  // 64KiB
   char read_buffer[kReadBufferSize];
-  bool has_skipped_source_files = false;
+  bool failed = false;
   for (int i = 0; i < num_source_files; ++i) {
     const base::FilePath media_file_source_path =
         source_files_dir.Append(GetFileNameStringFromIndex(i));
     if (!base::PathExists(media_file_source_path)) {
       VLOG(2) << __func__
               << " file not existed: " << media_file_source_path.value();
-      has_skipped_source_files = true;
-      continue;
+      failed = true;
+      break;
     }
 
     if (!AppendToFileThenDeleteSource(media_file_source_path,
@@ -131,19 +131,20 @@ MediaFileGenResult DoGenerateSingleMediaFile(
                                       unified_media_file_path,
                                       read_buffer,
                                       kReadBufferSize)) {
-      has_skipped_source_files = true;
+      failed = true;
+      break;
     }
   }
-  DCHECK(base::PathExists(unified_media_file_path));
 
-  // Delete empty source files dir.
+  // Delete source files dir.
   base::DeletePathRecursively(source_files_dir);
 
-  if (unified_media_file.GetLength() == 0)
-    return MediaFileGenResult::FAILED;
+  if (unified_media_file.GetLength() == 0 || failed) {
+    base::DeleteFile(unified_media_file_path);
+    return false;
+  }
 
-  return has_skipped_source_files ? MediaFileGenResult::PARTIAL_SUCCESS
-                                  : MediaFileGenResult::SUCCESS;
+  return true;
 }
 
 }  // namespace
@@ -176,14 +177,17 @@ PlaylistMediaFileDownloader::PlaylistMediaFileDownloader(
 
 PlaylistMediaFileDownloader::~PlaylistMediaFileDownloader() = default;
 
-void PlaylistMediaFileDownloader::NotifyFail() {
+void PlaylistMediaFileDownloader::NotifyFail(const std::string& id) {
   ResetDownloadStatus();
-  delegate_->OnMediaFileGenerationFailed(std::move(current_playlist_));
+  delegate_->OnMediaFileGenerationFailed(id);
 }
 
-void PlaylistMediaFileDownloader::NotifySucceed(bool partial) {
+void PlaylistMediaFileDownloader::NotifySucceed(
+    const std::string& id,
+    const std::string& media_file_path_key,
+    const std::string& media_file_path) {
   ResetDownloadStatus();
-  delegate_->OnMediaFileReady(std::move(current_playlist_), partial);
+  delegate_->OnMediaFileReady(id, media_file_path_key, media_file_path);
 }
 
 void PlaylistMediaFileDownloader::GenerateSingleMediaFile(
@@ -192,7 +196,7 @@ void PlaylistMediaFileDownloader::GenerateSingleMediaFile(
   DCHECK(!in_progress_);
 
   ResetDownloadStatus();
-  cancelled_ = false;
+
   in_progress_ = true;
   current_playlist_ = std::move(playlist_value);
 
@@ -204,7 +208,8 @@ void PlaylistMediaFileDownloader::GenerateSingleMediaFile(
   media_file_source_files_count_ = remained_download_files_;
   if (media_file_source_files_count_ == 0) {
     VLOG(2) << __func__ << ": Empty media file source list";
-    NotifySucceed(false);
+    NotifyFail(current_playlist_id_);
+    return;
   }
 
   playlist_dir_path_ =
@@ -227,7 +232,7 @@ void PlaylistMediaFileDownloader::CreateSourceFilesDirThenDownloads() {
 
 void PlaylistMediaFileDownloader::OnSourceFilesDirCreated(bool success) {
   if (!success) {
-    NotifyFail();
+    NotifyFail(current_playlist_id_);
     return;
   }
 
@@ -251,7 +256,7 @@ void PlaylistMediaFileDownloader::DownloadAllMediaFileSources() {
       DownloadMediaFile(GURL(*url), i);
     } else {
       NOTREACHED() << "Playlist has empty media file url";
-      NotifyFail();
+      NotifyFail(current_playlist_id_);
       break;
     }
   }
@@ -286,10 +291,6 @@ void PlaylistMediaFileDownloader::OnMediaFileDownloaded(
     SimpleURLLoaderList::iterator iter,
     int index,
     base::FilePath path) {
-  // When current media file generation is cancelled, all loaders are deleted.
-  // So, this callback will not be called.
-  DCHECK(!cancelled_);
-
   url_loaders_.erase(iter);
 
   if (path.empty()) {
@@ -307,7 +308,6 @@ void PlaylistMediaFileDownloader::OnMediaFileDownloaded(
 }
 
 void PlaylistMediaFileDownloader::RequestCancelCurrentPlaylistGeneration() {
-  cancelled_ = true;
   ResetDownloadStatus();
 }
 
@@ -318,20 +318,21 @@ void PlaylistMediaFileDownloader::StartSingleMediaFileGeneration() {
                      source_media_files_dir_, unified_media_file_name_,
                      media_file_source_files_count_),
       base::BindOnce(&PlaylistMediaFileDownloader::OnSingleMediaFileGenerated,
-                     weak_factory_.GetWeakPtr()));
+                     weak_factory_.GetWeakPtr(),
+                     current_playlist_id_));
 }
 
-// TODO(simonhong): Delete partial ready.
 // If some of source files are not fetched properly, it should be treated as
 // fail.
 void PlaylistMediaFileDownloader::OnSingleMediaFileGenerated(
-    MediaFileGenResult result) {
-  // Could be cancelled after all source files are downloaded.
+    const std::string& id, bool success) {
+  // If canceled or canceled and new download is started, |id| will be different
+  // with |current_playlist_id_|.
   // Just silently end here.
-  if (cancelled_)
+  if (id != current_playlist_id_)
     return;
 
-  if (result != MediaFileGenResult::FAILED) {
+  if (success) {
     base::FilePath media_file_path =
         playlist_dir_path_.Append(unified_media_file_name_);
     const std::string media_file_path_utf8 =
@@ -340,14 +341,9 @@ void PlaylistMediaFileDownloader::OnSingleMediaFileGenerated(
 #else
         media_file_path.value();
 #endif
-    const bool partial_ready = result == MediaFileGenResult::PARTIAL_SUCCESS;
-    current_playlist_.SetStringKey(media_file_path_key_, media_file_path_utf8);
-    current_playlist_.SetBoolKey(kPlaylistPartialReadyKey, partial_ready);
-    NotifySucceed(partial_ready);
+    NotifySucceed(id, media_file_path_key_, media_file_path_utf8);
   } else {
-    current_playlist_.SetStringKey(media_file_path_key_, "");
-    current_playlist_.SetBoolKey(kPlaylistPartialReadyKey, false);
-    NotifyFail();
+    NotifyFail(id);
   }
 }
 
@@ -365,7 +361,7 @@ void PlaylistMediaFileDownloader::ResetDownloadStatus() {
   remained_download_files_ = 0;
   media_file_source_files_count_ = 0;
   current_playlist_id_.clear();
-  // current_playlist_ = base::Value();
+  current_playlist_ = base::Value();
   url_loaders_.clear();
 }
 

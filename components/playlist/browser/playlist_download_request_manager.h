@@ -55,7 +55,8 @@ class PlaylistDownloadRequestManager :
   void OnYoutubeDownScriptReady(const std::string& youtubedown_script) override;
 
   // content::WebContentsObserver overrides:
-  void RenderFrameCreated(content::RenderFrameHost* render_frame_host) override;
+  void DidFinishLoad(content::RenderFrameHost* render_frame_host,
+                     const GURL& validated_url) override;
 
   // Will get date from youtube for downloading media files of |url| by
   // injecting youtubedown.js.

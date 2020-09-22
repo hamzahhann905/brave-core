@@ -11,9 +11,6 @@
 
 namespace playlist {
 
-// Partial means some source media files are not available.
-// TODO(simonhong): Partial status could be deleted. When PlaylistItem can't get
-// complete media file, it's status should be treated as failed status.
 struct PlaylistChangeParams {
   enum class ChangeType {
     CHANGE_TYPE_NONE,
@@ -21,11 +18,9 @@ struct PlaylistChangeParams {
     CHANGE_TYPE_THUMBNAIL_READY,     // Thumbnail ready to use for playlist
     CHANGE_TYPE_THUMBNAIL_FAILED,    // Failed to fetch thumbnail
     CHANGE_TYPE_PLAY_READY,          // Playlist ready to play
-    CHANGE_TYPE_PLAY_READY_PARTIAL,  // Playlist ready to play but partial
     CHANGE_TYPE_DELETED,             // A playlist deleted
     CHANGE_TYPE_ALL_DELETED,         // All playlist are deleted
     CHANGE_TYPE_ABORTED,             // Aborted during the creation process
-    CHANGE_TYPE_RECOVER_FAILED,      // Aborted during the creation process
   };
   static std::string GetPlaylistChangeTypeAsString(
       PlaylistChangeParams::ChangeType type);
@@ -69,7 +64,7 @@ struct PlaylistInfo {
   std::string thumbnail_path;
   std::string video_media_file_path;
   std::string audio_media_file_path;
-  bool partial_ready{false};
+  bool ready{false};
 
   CreatePlaylistParams create_params;
 };

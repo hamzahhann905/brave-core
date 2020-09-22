@@ -19,7 +19,7 @@
           {
             "name": "changeType",
             "type": "string",
-            "description": "Playlist item change status(add, deleted, aborted, thumbnail_ready, thumbnail_failed, play_ready, play_ready_partial)"
+            "description": "Playlist item change status(add, deleted, aborted, thumbnail_ready, thumbnail_failed, play_ready)"
           },
           {
             "name": "id",
@@ -54,9 +54,9 @@
             "type": "string",
             "description": "audio media file path for playlist. may be empty if video is already muxed."
           },
-          "partialReady": {
+          "ready": {
             "type": "boolean",
-            "description": "true if some of media sources are not handled properly"
+            "description": "true if this item is ready play"
           },
           "titles": {
             "type": "array",

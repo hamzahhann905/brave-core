@@ -27,8 +27,6 @@ std::string PlaylistChangeParams::GetPlaylistChangeTypeAsString(
       return "thumbnail_failed";
     case PlaylistChangeParams::ChangeType::CHANGE_TYPE_PLAY_READY:
       return "play_ready";
-    case PlaylistChangeParams::ChangeType::CHANGE_TYPE_PLAY_READY_PARTIAL:
-      return "play_ready_partial";
     case PlaylistChangeParams::ChangeType::CHANGE_TYPE_NONE:  // fall through
     default:
       NOTREACHED();
@@ -65,7 +63,7 @@ PlaylistInfo::PlaylistInfo(const PlaylistInfo& rhs) {
   video_media_file_path = rhs.video_media_file_path;
   audio_media_file_path = rhs.audio_media_file_path;
   create_params = rhs.create_params;
-  partial_ready = rhs.partial_ready;
+  ready = rhs.ready;
 }
 
 }  // namespace playlist

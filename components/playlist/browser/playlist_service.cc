@@ -126,6 +126,12 @@ void PlaylistService::NotifyPlaylistChanged(
     obs.OnPlaylistItemStatusChanged(params);
 }
 
+bool PlaylistService::HasPrefStorePlaylistItem(const std::string& id) const {
+  const base::Value* playlist_info =
+      prefs_->Get(kPlaylistItems)->FindDictKey(id);
+  return !!playlist_info;
+}
+
 void PlaylistService::GenerateMediafileForPlaylistItem(
     const std::string& id) {
   const base::Value* playlist_info =
@@ -211,6 +217,8 @@ void PlaylistService::DownloadThumbnail(const std::string& id) {
 
 void PlaylistService::OnThumbnailDownloaded(const std::string& id,
                                             const base::FilePath& path) {
+  DCHECK(IsValidPlaylistItem(id));
+
   if (path.empty()) {
     VLOG(2) << __func__ << ": thumbnail fetching failed for " << id;
     NotifyPlaylistChanged(
@@ -266,8 +274,14 @@ void PlaylistService::RecoverPlaylistItem(const std::string& id) {
     LOG(ERROR) << __func__ << ": Invalid playlist id for recover: " << id;
     return;
   }
+  base::Optional<bool> ready =
+      playlist_info->FindBoolPath(kPlaylistReadyKey);
+  if (*ready) {
+    VLOG(2) << __func__ << ": This is ready to play(" << id << ")";
+    return;
+  }
 
-  VLOG(2) << __func__ << ": This is in recovering";
+  VLOG(2) << __func__ << ": This is in recovering playlist item(" << id << ")";
 
   const std::string* thumbnail_path_str =
       playlist_info->FindStringPath(kPlaylistThumbnailPathKey);
@@ -276,16 +290,13 @@ void PlaylistService::RecoverPlaylistItem(const std::string& id) {
   if (!has_thumbnail)
     DownloadThumbnail(id);
 
-  base::Optional<bool> partial_ready =
-      playlist_info->FindBoolPath(kPlaylistPartialReadyKey);
   const std::string* video_media_file_path =
       playlist_info->FindStringPath(kPlaylistVideoMediaFilePathKey);
   const std::string* audio_media_file_path =
       playlist_info->FindStringPath(kPlaylistAudioMediaFilePathKey);
   // Only try to regenerate if partial ready or there is no media file.
   if (!video_media_file_path || video_media_file_path->empty() ||
-      !audio_media_file_path || audio_media_file_path->empty() ||
-      *partial_ready) {
+      !audio_media_file_path || audio_media_file_path->empty()) {
     VLOG(2) << __func__ << ": Regenerate media file";
     GenerateMediafileForPlaylistItem(id);
   }
@@ -331,38 +342,49 @@ void PlaylistService::RemoveObserver(PlaylistServiceObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
-void PlaylistService::OnMediaFileReady(base::Value playlist_value,
-                                       bool partial) {
-  const std::string playlist_id =
-      *playlist_value.FindStringKey(kPlaylistIDKey);
-  UpdatePlaylistValue(playlist_id, std::move(playlist_value));
+void PlaylistService::OnMediaFileReady(const std::string& id,
+                                       const std::string& audio_file_path,
+                                       const std::string& video_file_path) {
+  VLOG(2) << __func__ << ": " << id;
+  DCHECK(IsValidPlaylistItem(id));
+
+  const base::Value* item_value_ptr =
+      prefs_->Get(kPlaylistItems)->FindDictKey(id);
+  base::Value item = item_value_ptr->Clone();
+
+  item.SetBoolKey(kPlaylistReadyKey, true);
+  item.SetStringKey(kPlaylistAudioMediaFilePathKey, audio_file_path);
+  item.SetStringKey(kPlaylistVideoMediaFilePathKey, video_file_path);
+  UpdatePlaylistValue(id, std::move(item));
 
   NotifyPlaylistChanged(
-      {partial
-           ? PlaylistChangeParams::ChangeType::CHANGE_TYPE_PLAY_READY_PARTIAL
-           : PlaylistChangeParams::ChangeType::CHANGE_TYPE_PLAY_READY,
-       playlist_id});
+      {PlaylistChangeParams::ChangeType::CHANGE_TYPE_PLAY_READY, id});
 
-  // TODO(simonhong): Revisit how |partial| handles.
-  // If partial is true here, one of video or audio media files are not ready.
-  if (partial)
-    return;
-
-  GenerateIndexHTMLFile(GetPlaylistItemDirPath(playlist_id));
+  GenerateIndexHTMLFile(GetPlaylistItemDirPath(id));
 }
 
-void PlaylistService::OnMediaFileGenerationFailed(
-    base::Value playlist_value) {
-  VLOG(2) << __func__ << ": "
-          << *playlist_value.FindStringKey(kPlaylistPlaylistNameKey);
+void PlaylistService::OnMediaFileGenerationFailed(const std::string& id) {
+  VLOG(2) << __func__ << ": " << id;
 
-  const std::string playlist_id =
-      *playlist_value.FindStringKey(kPlaylistIDKey);
-  UpdatePlaylistValue(playlist_id, std::move(playlist_value));
-  thumbnail_downloader_->CancelDownloadRequest(playlist_id);
+  DCHECK(IsValidPlaylistItem(id));
 
+  const base::Value* item_value_ptr =
+      prefs_->Get(kPlaylistItems)->FindDictKey(id);
+  base::Value item = item_value_ptr->Clone();
+
+  item.SetBoolKey(kPlaylistReadyKey, false);
+  item.SetStringKey(kPlaylistAudioMediaFilePathKey, "");
+  item.SetStringKey(kPlaylistVideoMediaFilePathKey, "");
+
+  UpdatePlaylistValue(id, std::move(item));
+
+  thumbnail_downloader_->CancelDownloadRequest(id);
   NotifyPlaylistChanged(
-      {PlaylistChangeParams::ChangeType::CHANGE_TYPE_ABORTED, playlist_id});
+      {PlaylistChangeParams::ChangeType::CHANGE_TYPE_ABORTED, id});
+}
+
+bool PlaylistService::IsValidPlaylistItem(const std::string& id) {
+  return HasPrefStorePlaylistItem(id);
 }
 
 void PlaylistService::OnGetOrphanedPaths(

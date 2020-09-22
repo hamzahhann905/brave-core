@@ -8,6 +8,7 @@
 #include "chrome/common/chrome_isolated_world_ids.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_handle.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 #include "third_party/re2/src/re2/re2.h"
 
@@ -34,8 +35,7 @@ PlaylistDownloadRequestManager::PlaylistDownloadRequestManager(
   youtubedown_script_ = youtubedown_component_manager_->youtubedown_script();
 }
 
-PlaylistDownloadRequestManager::~PlaylistDownloadRequestManager() {
-}
+PlaylistDownloadRequestManager::~PlaylistDownloadRequestManager() = default;
 
 void PlaylistDownloadRequestManager::CreateWebContents() {
   if (webcontents_)
@@ -53,7 +53,6 @@ void PlaylistDownloadRequestManager::CreateWebContents() {
 
 void PlaylistDownloadRequestManager::GeneratePlaylistCreateParamsForYoutubeURL(
     const std::string& url) {
-
   if (!ReadyToRunYoutubeDownJS()) {
     pending_youtube_urls_.push_back(url);
 
@@ -103,14 +102,17 @@ bool PlaylistDownloadRequestManager::ReadyToRunYoutubeDownJS() const {
   return false;
 }
 
-void PlaylistDownloadRequestManager::RenderFrameCreated(
-    content::RenderFrameHost* render_frame_host) {
-  // To run youtubedown.js, frame should be ready.
-  // After that, we don't need to observe.
-  webcontents_ready_ = true;
-  Observe(nullptr);
+void PlaylistDownloadRequestManager::DidFinishLoad(
+    content::RenderFrameHost* render_frame_host,
+    const GURL& validated_url) {
+  if (render_frame_host->GetMainFrame()) {
+    // To run youtubedown.js, frame should be ready.
+    // After that, we don't need to observe.
+    webcontents_ready_ = true;
+    Observe(nullptr);
 
-  FetchAllPendingYoutubeURLs();
+    FetchAllPendingYoutubeURLs();
+  }
 }
 
 void PlaylistDownloadRequestManager::OnGetYoutubeDownData(base::Value value) {
